@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cost Threshold Monitor</title>
+<style>
+:root{--bg:#0b1220;--card:#131c2e;--in:#0d1626;--line:#223049;--tx:#e6edf7;--mu:#a3b2c9;--or:#ff9900;--ok:#22c55e;--bad:#ef4444;--off:#64748b}
+*{box-sizing:border-box}
+body{margin:0;padding:14px;background:var(--bg);color:var(--tx);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-variant-numeric:tabular-nums}
+.wrap{max-width:1180px;margin:auto}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+h1{font-size:22px;margin:0;font-weight:700}
+h1 span{color:var(--or)}
+.sub{color:var(--mu);font-size:13px}
+.hr{display:flex;align-items:center;gap:14px}
+.api{font-size:13px;color:var(--mu);display:flex;align-items:center;gap:7px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--off)}
+.dot.ok{background:var(--ok)}.dot.bad{background:var(--bad)}.dot.warn{background:#eab308}
+.grid{display:grid;grid-template-columns:290px 1fr;gap:16px}
+@media(max-width:780px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px}
+h2{font-size:15px;margin:0 0 12px;font-weight:600;color:var(--mu)}
+label{display:block;font-size:13px;color:var(--mu);margin:10px 0 5px}
+input[type=number]{width:100%;background:var(--in);border:1px solid var(--line);color:var(--tx);border-radius:8px;padding:9px;font-size:16px}
+input[type=range]{width:100%;accent-color:var(--or);margin-top:8px}
+.seg{display:flex;background:var(--in);border:1px solid var(--line);border-radius:9px;padding:3px}
+.seg button{background:none;border:0;color:var(--mu);padding:6px 16px;border-radius:7px;font-weight:600;cursor:pointer}
+.seg button.on{background:var(--or);color:#111}
+.row{display:flex;gap:8px;margin-top:10px}
+.ghost{flex:1;background:none;border:1px solid var(--line);color:var(--tx);border-radius:8px;padding:8px;cursor:pointer;font-size:13px}
+.ghost:hover{border-color:var(--mu)}
+.run{width:100%;margin-top:14px;background:var(--or);color:#111;border:0;border-radius:9px;padding:12px;font-weight:700;font-size:15px;cursor:pointer}
+button:disabled,input:disabled{opacity:.4;cursor:not-allowed}
+:focus-visible{outline:2px solid var(--or);outline-offset:2px}
+.note{font-size:12px;color:var(--mu);margin:10px 0 0}
+.warn{font-size:13px;color:var(--mu);margin:12px 0 0;display:none}
+.err{display:none;background:#2a1417;border:1px solid var(--bad);color:#fecaca;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:14px}
+.hero{text-align:center;padding:14px 0 6px;margin:auto 0}
+.grid>section:nth-child(2){display:flex;flex-direction:column}
+.st{font-size:40px;font-weight:800;letter-spacing:.01em;line-height:1.1}
+.st.safe{color:var(--ok)}.st.bad{color:var(--bad)}.st.idle{color:var(--off)}
+.amt{font-size:20px;margin:6px 0 30px;color:var(--tx)}
+.bar{position:relative;height:18px;background:var(--in);border-radius:9px;margin:0 6px}
+.fill{height:100%;width:0;border-radius:9px;background:var(--ok);transition:width .5s ease}
+.fill.bad{background:var(--bad)}
+.mark{position:absolute;top:-8px;bottom:-8px;width:2px;background:var(--tx);left:66.6%}
+.mark i{position:absolute;top:100%;left:50%;transform:translateX(-50%);font-style:normal;font-size:12px;color:var(--mu);margin-top:3px;white-space:nowrap}
+.pct{font-size:13px;color:var(--mu);margin-top:34px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+.chip{font-size:12px;color:var(--mu);border:1px solid var(--line);border-radius:99px;padding:3px 10px}
+.pipe{display:flex;align-items:center;gap:16px;flex-wrap:nowrap}
+.br{position:relative;display:flex;flex-direction:column;gap:12px;flex:1;min-width:0;padding-left:24px}
+.br::before{content:"";position:absolute;left:0;top:25%;bottom:25%;border-left:2px solid #6b7c99}
+.br::after{content:"";position:absolute;left:-16px;top:50%;width:16px;border-top:2px solid #6b7c99}
+.ln{position:relative;display:flex;align-items:center;gap:10px}
+.ln::before{content:"";position:absolute;left:-24px;top:50%;width:24px;border-top:2px solid #6b7c99}
+.ar{color:var(--mu)}
+.node{flex:1;background:var(--in);border:1px solid var(--line);border-left:4px solid var(--off);border-radius:8px;padding:8px 12px;min-width:110px}
+.node b{display:block;font-size:15px}
+.node span{font-size:13px;color:var(--mu)}
+.node.ok{border-left-color:var(--ok)}.node.bad{border-left-color:var(--bad)}.node.skip{border-left-color:var(--mu)}
+.node.main{flex:0 0 130px;border-left-color:var(--or)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.cap{display:none;font-size:12px;color:var(--mu);margin:4px 0 8px}
+@media(max-width:780px){.grid2{grid-template-columns:1fr}.pipe{flex-wrap:wrap}}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;color:var(--mu);font-weight:500;font-size:13px;padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:8px;border-bottom:1px solid var(--line)}
+td.s-safe{color:var(--ok)}td.s-bad{color:var(--bad)}
+.tw{overflow-x:auto}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.link{background:none;border:0;color:var(--mu);cursor:pointer;font-size:12px;text-decoration:underline}
+.spark{width:100%;height:46px;margin-top:12px;display:none}
+.empty{color:var(--mu);font-size:14px;padding:6px 0}
+.stale{opacity:.45}
+tr.latest td{background:#182540}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1><span>AWS</span> Cost Threshold Monitor</h1>
+    <div class="sub">Cloud spending and IoT alert system</div>
+  </div>
+  <div class="hr">
+    <div class="seg" role="group" aria-label="Mode">
+      <button id="mDEMO" class="on">DEMO</button><button id="mREAL">REAL</button>
+    </div>
+    <div class="api"><span class="dot" id="dot"></span><span id="apiTxt">API not checked yet</span></div>
+  </div>
+</header>
+
+<div class="grid">
+  <section class="card">
+    <h2>Test run settings</h2>
+    <label for="budget">Budget limit ($)</label>
+    <input type="number" id="budget" min="0" max="10000" step="0.05" value="0.50">
+    <div id="demoBox">
+      <label for="demo">Demo cost ($)</label>
+      <input type="number" id="demo" min="0" max="10000" step="0.05" value="0.75">
+      <input type="range" id="slide" min="0" max="2" step="0.05" value="0.75" aria-label="Demo cost slider">
+      <div class="row">
+        <button class="ghost" id="pSafe">Simulate safe</button>
+        <button class="ghost" id="pBad">Simulate exceed</button>
+      </div>
+    </div>
+    <div class="warn" id="realWarn" title="Each uncached Cost Explorer request costs about $0.01."><b style="color:var(--or)">REAL mode</b> uses AWS Cost Explorer for the latest completed day. Billing data may be delayed or estimated.</div>
+    <button class="run" id="run">Run check</button>
+    <p class="note">These settings apply to this check only. They are not saved to Lambda.</p>
+  </section>
+
+  <section class="card" aria-live="polite">
+    <div class="err" id="err"></div>
+    <div class="hero">
+      <div class="st idle" id="st">No check yet</div>
+      <div class="amt" id="amt">Run a check to see spending against your budget.</div>
+      <div class="bar"><div class="fill" id="fill"></div><div class="mark" id="mark"><i>Budget</i></div></div>
+      <div class="pct" id="pct">&nbsp;</div>
+      <div class="chips" id="chips"></div>
+      <div class="note" id="stl" style="display:none;margin-top:12px">Previous result. The latest check failed.</div>
+    </div>
+  </section>
+</div>
+
+<div class="grid2">
+<section class="card">
+  <h2>Execution pipeline</h2>
+  <div class="pipe">
+    <div class="node main" id="nL"><b>Lambda</b><span id="tL">Waiting</span></div>
+    <div class="br">
+      <div class="ln"><div class="node" id="nI"><b>IoT Core</b><span id="tI">Waiting</span></div><span class="ar">&rarr;</span><div class="node"><b>ESP32</b><span>Not connected</span></div></div>
+      <div class="ln"><div class="node" id="nS"><b>SNS</b><span id="tS">Waiting</span></div><span class="ar">&rarr;</span><div class="node" id="nE"><b>Email</b><span id="tE">Waiting</span></div></div>
+    </div>
+  </div>
+  <p class="note">Published/sent means AWS accepted the message; downstream delivery is not confirmed.</p>
+</section>
+
+<section class="card">
+  <div class="top"><h2 style="margin:0">Recent checks</h2><button class="link" id="clr">Clear</button></div>
+  <svg class="spark" id="spark" viewBox="0 0 200 40" preserveAspectRatio="none" aria-label="Usage trend"></svg>
+  <div class="cap" id="cap">Usage per check, as % of budget. The dashed line is 100%.</div>
+  <div class="tw"><table id="tbl"><thead><tr><th>Time</th><th>Mode</th><th>Cost</th><th>Budget</th><th>Status</th></tr></thead><tbody id="tb"></tbody></table></div>
+  <div class="empty" id="empty">No checks yet.</div>
+</section>
+</div>
+</div>
+
+<script>
+const API_URL = "https://6visw9b46k.execute-api.us-east-1.amazonaws.com/check";
+const KEY = "costMonitorHistory";
+const $ = id => document.getElementById(id);
+let mode = "DEMO", busy = false, shown = false, lastMode = "", latestAttemptFailed = false;
+const money = n => "$" + Number(n).toFixed(2);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const when = iso => new Date(iso).toLocaleString([], {day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit"});
+
+function setMode(m){
+  mode = m;
+  $("mDEMO").classList.toggle("on", m==="DEMO");
+  $("mREAL").classList.toggle("on", m==="REAL");
+  $("demoBox").style.display = m==="DEMO" ? "block" : "none";
+  $("realWarn").style.display = m==="REAL" ? "block" : "none";
+  updateStale();
+}
+$("mDEMO").onclick = () => setMode("DEMO");
+$("mREAL").onclick = () => setMode("REAL");
+
+const sMax = () => Math.min(10000, Math.max(2, Math.ceil((parseFloat($("budget").value) || 0.5) * 2)));
+function setDemo(v){ v = Math.min(10000, Math.round(v*100)/100); $("demo").value = v; $("slide").max = sMax(); $("slide").value = v; }
+$("slide").oninput = e => { $("demo").value = e.target.value; };
+$("demo").oninput = e => { $("slide").value = e.target.value; };
+$("budget").oninput = () => { $("slide").max = sMax(); $("pBad").disabled = (parseFloat($("budget").value) || 0) >= 10000; };
+$("pSafe").onclick = () => setDemo((parseFloat($("budget").value)||0)*0.6);
+$("pBad").onclick = () => setDemo((parseFloat($("budget").value)||0.5)*1.5);
+
+function setApi(state, txt){ $("dot").className = "dot " + state; $("apiTxt").textContent = txt; }
+function showErr(msg){ const e = $("err"); e.textContent = msg; e.style.display = "block"; }
+function hideErr(){ $("err").style.display = "none"; }
+function updateStale(){
+  if (!shown) return stale(false);
+  if (latestAttemptFailed) return stale(true, "Previous result. The latest check failed.");
+  if (mode !== lastMode) return stale(true, "This result is from " + lastMode + " mode. Run a check to update it.");
+  stale(false);
+}
+function stale(on, msg){ $("stl").textContent = msg || "Previous result. The latest check failed."; document.querySelectorAll(".hero .st,.hero .amt,.hero .bar,.hero .pct,.hero .chips,.pipe").forEach(e => e.classList.toggle("stale", on)); $("stl").style.display = on ? "block" : "none"; }
+
+function node(id, tid, cls, text){ $(id).className = "node " + cls; const sym = {ok:"\u2713 ", bad:"\u2715 ", skip:"\u2013 "}[cls.split(" ")[0]] || ""; $(tid).textContent = sym + text; }
+
+function render(d){
+  const over = d.status === "LIMIT_EXCEEDED";
+  const pct = d.budget > 0 ? d.cost / d.budget * 100 : (d.cost > 0 ? 999 : 0);
+  const scale = Math.max(150, Math.min(pct * 1.1, 300));
+  $("st").textContent = over ? "Limit exceeded" : "Safe";
+  $("st").className = "st " + (over ? "bad" : "safe");
+  $("amt").textContent = money(d.cost) + " of " + money(d.budget);
+  const f = $("fill"); f.className = "fill" + (over ? " bad" : "");
+  f.style.width = Math.min(pct, scale) / scale * 100 + "%";
+  $("mark").style.left = 100 / scale * 100 + "%";
+  $("pct").textContent = d.budget > 0 ? Math.round(pct) + "% of budget used" : (d.cost > 0 ? "Any spending exceeds a $0.00 budget" : "No spending against a $0.00 budget");
+  const chips = [d.mode + " mode", "Checked " + when(d.checked_at)];
+  if (d.mode === "REAL") chips.push("Cost for " + new Date(d.date + "T00:00:00Z").toLocaleDateString([], {day:"2-digit", month:"short", year:"numeric", timeZone:"UTC"}), d.estimated ? "AWS data is estimated" : "AWS data is final");
+  else chips.push("Simulated spending");
+  $("chips").innerHTML = chips.map(c => '<span class="chip">' + esc(c) + "</span>").join("");
+
+  const a = d.actions || {};
+  node("nL", "tL", "ok main", "Executed");
+  node("nI", "tI", a.iot === "published" ? "ok" : "bad", a.iot === "published" ? "Published" : a.iot === "failed" ? "Failed" : (a.iot || "Unknown"));
+  node("nS", "tS", a.sns === "sent" ? "ok" : a.sns === "skipped" ? "skip" : "bad", a.sns === "sent" ? "Alert sent" : a.sns === "skipped" ? "Not needed" : a.sns === "failed" ? "Failed" : (a.sns || "Unknown"));
+  node("nE", "tE", a.sns === "failed" ? "bad" : a.sns === "sent" ? "" : "skip", a.sns === "sent" ? "Delivery not tracked" : "Not sent");
+}
+
+function load(){ try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch(e){ return []; } }
+function save(d){
+  const h = load(); h.unshift({t:d.checked_at, m:d.mode, c:d.cost, b:d.budget, s:d.status});
+  try { localStorage.setItem(KEY, JSON.stringify(h.slice(0, 5))); } catch(e){}
+  renderHistory();
+}
+function renderHistory(){
+  const h = load();
+  $("empty").style.display = h.length ? "none" : "block";
+  $("clr").style.display = h.length ? "inline" : "none";
+  $("tbl").style.display = h.length ? "table" : "none";
+  $("tb").innerHTML = h.map((r, i) => '<tr' + (i === 0 ? ' class="latest"' : '') + '><td>' + esc(when(r.t)) + '</td><td>' + esc(r.m) + '</td><td>' + money(r.c) + '</td><td>' + money(r.b) + '</td><td class="' + (r.s === "SAFE" ? "s-safe" : "s-bad") + '">' + (r.s === "SAFE" ? "Safe" : "Limit exceeded") + '</td></tr>').join("");
+  const sp = $("spark");
+  $("cap").style.display = h.length < 2 ? "none" : "block";
+  if (h.length < 2) { sp.style.display = "none"; return; }
+  const pts = h.slice().reverse().map((r, i, arr) => {
+    const u = Math.min(r.b > 0 ? r.c / r.b * 100 : 200, 200);
+    return (i / (arr.length - 1) * 196 + 2).toFixed(1) + "," + (38 - u / 200 * 36).toFixed(1);
+  }).join(" ");
+  sp.innerHTML = '<line x1="0" x2="200" y1="20" y2="20" stroke="#64748b" stroke-dasharray="3 3" stroke-width="1" vector-effect="non-scaling-stroke"/><polyline points="' + pts + '" fill="none" stroke="#ff9900" stroke-width="2" vector-effect="non-scaling-stroke"/>';
+  sp.style.display = "block";
+}
+$("clr").onclick = () => { try { localStorage.removeItem(KEY); } catch(e){} renderHistory(); };
+
+async function run(){
+  if (busy) return;
+  const budget = parseFloat($("budget").value), demo = parseFloat($("demo").value);
+  if (!Number.isFinite(budget) || budget < 0 || budget > 10000) return showErr("Enter a budget between 0 and 10,000.");
+  const body = {mode, budget};
+  if (mode === "DEMO") {
+    if (!Number.isFinite(demo) || demo < 0 || demo > 10000) return showErr("Enter a demo cost between 0 and 10,000.");
+    body.demo_cost = demo;
+  }
+  busy = true; hideErr();
+  $("run").disabled = true; $("run").textContent = "Checking...";
+  let ok = false;
+  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 25000);
+  try {
+    const r = await fetch(API_URL, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body), signal:ctl.signal});
+    let d = null; try { d = await r.json(); } catch(e){}
+    if (r.ok && d && d.status) { setApi("ok", "API connected"); render(d); save(d); ok = true; shown = true; lastMode = d.mode; }
+    else if (r.status === 400) { setApi("ok", "API connected"); showErr((d && d.message) || "The API rejected those settings."); }
+    else if (r.status === 502) { setApi("warn", "API reachable. AWS cost lookup failed"); showErr("AWS Cost Explorer did not return a cost. Try again in a moment."); }
+    else if (r.status === 429) { setApi("warn", "API reachable. Rate limited"); showErr("Too many requests. Wait a second, then run the check again."); }
+    else { setApi("warn", "API error " + r.status); showErr("The API returned an unexpected response (" + r.status + ")."); }
+  } catch(e) {
+    setApi("bad", "API unreachable");
+    showErr(e.name === "AbortError" ? "The API took too long to respond." : "Could not reach the API. Check your connection and the API URL.");
+  } finally {
+    clearTimeout(timer); latestAttemptFailed = !ok; updateStale();
+    setTimeout(() => { busy = false; $("run").disabled = false; $("run").textContent = "Run check"; }, 600);
+  }
+}
+$("run").onclick = run;
+setMode("DEMO"); renderHistory();
+</script>
+</body>
+</html>
