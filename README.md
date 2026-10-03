@@ -6,15 +6,16 @@ The project supports both **DEMO** and **REAL** modes, shows whether spending is
 
 ## Live Demo
 
-GitHub Pages deployment: **In progress**
+**GitHub Pages:**  
+https://syedrehanuddin.github.io/CostThresholdMonitor/
 
 > The frontend may stay online even when the AWS Academy Learner Lab backend is unavailable. In that case, the dashboard shows an API-unreachable state instead of displaying fake data.
 
 ## Screenshots
 
-Project screenshots will be added after the GitHub Pages deployment is complete.
+Project screenshots will be added from clean fullscreen dashboard views.
 
-Planned screenshots:
+Recommended screenshots:
 
 - DEMO SAFE
 - DEMO LIMIT_EXCEEDED
@@ -58,6 +59,7 @@ Dashboard ---> API Gateway ---> AWS Lambda
 - SAFE and LIMIT_EXCEEDED visualization
 - API failure handling
 - Stale-result handling
+- GitHub Pages deployment
 - Localhost backup for demonstrations
 
 ## Monitoring Modes
@@ -127,7 +129,7 @@ A successful SNS publish means AWS accepted the alert request. Downstream email 
 
 - Runtime: Python on AWS Lambda
 - Handler: `lambda_function.lambda_handler`
-- Lambda timeout: 20 seconds
+- Lambda timeout: **20 seconds** (verified with AWS CLI)
 - Lambda source: `lambda/lambda_function.py`
 - Required IAM permissions:
   - `ce:GetCostAndUsage`
@@ -232,7 +234,7 @@ The small chart shows usage as a percentage of the configured budget, with a das
 
 ## Testing
 
-Testing was performed using direct Lambda invocations, API requests, live browser dashboard checks, failure simulations, and confirmation of SNS email delivery.
+Testing was performed using direct Lambda invocations, API requests, live browser dashboard checks, failure simulations, CORS preflight checks, and confirmation of SNS email delivery.
 
 The following cases have been verified:
 
@@ -257,8 +259,13 @@ The following cases have been verified:
 | API/network failure UI | Passed |
 | Mode-change stale result | Passed |
 | Recovery after network failure | Passed |
+| GitHub Pages deployment | Passed |
+| GitHub Pages origin allowed by CORS (live browser test) | Passed |
+| Localhost origin allowed by CORS (preflight test) | Passed |
+| Unapproved origin receives no CORS allow header (preflight test) | Passed |
+| Lambda timeout verified as 20 seconds | Passed |
 
-API Gateway throttling is configured at 2 requests/second with a burst limit of 5, but a dedicated 429 stress test has not been included in the table above.
+API Gateway throttling is configured at 2 requests/second with a burst limit of 5, but a dedicated 429 stress test is not included in the table above.
 
 ## Current Hardware Status
 
@@ -313,11 +320,14 @@ No AWS credentials, secret access keys, session tokens, IoT private keys, certif
 
 The frontend contains the API Gateway endpoint because it is required to communicate with the backend. The API Gateway endpoint is not treated as a secret.
 
-During development, API Gateway CORS is still permissive.
+API Gateway CORS is currently restricted to the approved GitHub Pages origin and the localhost backup origin:
 
-After GitHub Pages deployment, CORS will be restricted to the approved GitHub Pages origin and the localhost backup origin.
+```text
+https://syedrehanuddin.github.io
+http://localhost:8000
+```
 
-CORS is **not** authentication.
+CORS is **not** authentication. Direct tools such as `curl` can still call the public API endpoint.
 
 The public API currently does not use user authentication, so this deployment should be treated as a college/demo deployment rather than a production service.
 
@@ -334,7 +344,11 @@ The public API currently does not use user authentication, so this deployment sh
 
 ## Deployment
 
-The dashboard is intended to be deployed using GitHub Pages.
+The dashboard is deployed using GitHub Pages:
+
+```text
+https://syedrehanuddin.github.io/CostThresholdMonitor/
+```
 
 A localhost version is also retained as a backup for demonstrations.
 
@@ -350,12 +364,12 @@ Then open:
 http://localhost:8000/
 ```
 
-## Planned CORS Configuration
+## CORS Configuration
 
-After GitHub Pages deployment, API Gateway CORS should allow both:
+API Gateway currently allows these browser origins:
 
 ```text
-https://YOUR_GITHUB_USERNAME.github.io
+https://syedrehanuddin.github.io
 http://localhost:8000
 ```
 
@@ -364,14 +378,20 @@ The repository path is not part of the origin.
 For example:
 
 ```text
-https://username.github.io/CostThresholdMonitor/
+https://syedrehanuddin.github.io/CostThresholdMonitor/
 ```
 
 has the origin:
 
 ```text
-https://username.github.io
+https://syedrehanuddin.github.io
 ```
+
+The CORS configuration was verified with preflight requests:
+
+- GitHub Pages origin returned `access-control-allow-origin`
+- Localhost origin returned `access-control-allow-origin`
+- An unapproved origin did not receive `access-control-allow-origin`
 
 ## EventBridge
 
@@ -416,7 +436,7 @@ Before presenting the project:
 
 - Connect ESP32 to AWS IoT Core
 - Display cost and budget on OLED
-- Activate buzzer when budget is exceeded
+- Activate buzzer when the budget is exceeded
 - Add ESP32 acknowledgement messages
 - Update the dashboard device state only after acknowledgement
 - Add authentication before wider public deployment
@@ -428,5 +448,7 @@ Before presenting the project:
 - Frontend dashboard: **Complete**
 - AWS backend: **Complete and tested**
 - EventBridge scheduled rule: **Configured, currently disabled**
-- GitHub Pages deployment: **In progress**
+- GitHub Pages deployment: **Deployed and verified**
+- CORS restriction: **Configured and verified**
+- Lambda timeout: **20 seconds, verified**
 - ESP32 hardware integration: **Pending**
