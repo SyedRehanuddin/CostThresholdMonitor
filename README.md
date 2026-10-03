@@ -13,13 +13,17 @@ https://syedrehanuddin.github.io/CostThresholdMonitor/
 
 ## Screenshots
 
-Project screenshots will be added from clean fullscreen dashboard views.
+### DEMO - Safe
 
-Recommended screenshots:
+![DEMO safe](screenshots/safe.png)
 
-- DEMO SAFE
-- DEMO LIMIT_EXCEEDED
-- REAL mode
+### DEMO - Limit Exceeded
+
+![DEMO limit exceeded](screenshots/exceeded.png)
+
+### REAL Mode
+
+![REAL mode](screenshots/real.png)
 
 ## Architecture
 
